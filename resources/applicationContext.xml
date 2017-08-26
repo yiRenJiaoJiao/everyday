@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context" 
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:cache="http://www.springframework.org/schema/cache"
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/aop 
+	http://www.springframework.org/schema/aop/spring-aop.xsd
+	http://www.springframework.org/schema/context 
+	http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/tx 
+	http://www.springframework.org/schema/tx/spring-tx.xsd
+	http://www.springframework.org/schema/cache
+    http://www.springframework.org/schema/cache/spring-cache.xsd">
+	<!-- 引入外部属性文件 -->
+	<context:property-placeholder location="classpath:db.properties" />
+
+	<!-- 连接池 -->
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+		<property name="driverClass" value="${jdbc.driverClass}" />
+		<property name="jdbcUrl" value="${jdbc.url}" />
+		<property name="user" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+	</bean>
+
+	<!-- sessionFactory -->
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate3.LocalSessionFactoryBean">
+		<!-- 第一部分： 连接池 -->
+		<property name="dataSource" ref="dataSource" />
+		<!-- 第二部分： hibernate常用属性 -->
+		<property name="hibernateProperties">
+			<props>
+			<!-- 设置方言 -->
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQL5Dialect</prop>
+				<!-- 设置打印sql语句 -->
+				<prop key="hibernate.show_sql">true</prop>
+				<!-- 格式化sql语句 -->
+				<prop key="hibernate.format_sql">true</prop>
+				<!-- 自动建表 -->
+				<prop key="hibernate.hbm2ddl.auto">update</prop>
+			</props>
+		</property>
+		<!-- 第三部分： 引入hbm -->
+		<!-- <property name="mappingResources">
+			<list>
+				<value>com/storeManager/domain/History.hbm.xml</value>
+				<value>com/storeManager/domain/Goods.hbm.xml</value>
+				<value>com/storeManager/domain/Store.hbm.xml</value>
+				<value>com/storeManager/domain/Userinfo.hbm.xml</value>
+			</list>
+		</property> -->
+		<!-- 使用通配符引入hbm -->
+		<property name="mappingLocations">
+			<list>
+				<!--后续引入hbm的时候，只要将hbm放入这个路径中就会自动加载-->
+				<value>classpath:com/erveryDayUse/domain/*.hbm.xml</value>
+			</list>
+		</property>
+	</bean>
+	<!-- 二级缓存管理 -->
+	<!-- 配置二级缓存管理平台 -->
+	<bean id="ehCacheManager" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean">
+		<property name="configLocation" value="classpath:ehcatch.xml"></property>
+	</bean>
+	<!-- 启动具体的二级缓存 -->
+	<bean id="cacheManager" class="org.springframework.cache.ehcache.EhCacheCacheManager">
+		<property name="cacheManager" ref="ehCacheManager"></property>
+	</bean>
+	<!-- 开启二级缓存注解 -->
+	<cache:annotation-driven cache-manager="cacheManager"/>
+	
+	<!-- 事务管理通知 -->
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="login" read-only="true"/>
+			<tx:method name="save*" read-only="false"/>
+			<tx:method name="update*" read-only="false"/>
+			<tx:method name="delete*" read-only="false"/>
+			<tx:method name="find*" read-only="true"/>
+		</tx:attributes>
+	</tx:advice>
+	<!-- 事务平台管理器 -->
+	<bean id="transactionManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+	
+	<!-- 切入点和切面 -->
+	<aop:config>
+		<aop:pointcut expression="bean(*Service)" id="txPointcut"/>
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="txPointcut"/>
+	</aop:config> 
+	
+	<!-- dao 属性的注入使用注解的方式-->
+	<bean id="genericDao" class="com.everyDayUse.dao.impl.GenericDaoImpl">
+		<property name="sessionFactory" ref="sessionFactory"></property>
+	</bean>
+	<!-- service -->
+	<bean id="userService" class="com.everyDayUse.serviceImpl.UserServiceImpl">
+		<!-- <property name="userDao" ref="genericDao"></property> -->
+	</bean>
+	<bean id="consumePlanService" class="com.everyDayUse.serviceImpl.ConsumePlanServiceImpl">
+	</bean>
+	<bean id="consumeService" class="com.everyDayUse.serviceImpl.ConsumeServiceImpl">
+	</bean>
+	<bean id="consumeTypeService" class="com.everyDayUse.serviceImpl.ConsumeTypeServiceImpl">
+	</bean>
+	
+	
+	
+	
+	<!-- action -->
+	<bean id="userAction" class="com.everyDayUse.action.UserAction"  scope="prototype"></bean>
+	<bean id="consumePlanAction" class="com.everyDayUse.action.ConsumePlanAction" scope="prototype"></bean>
+	<bean id="consumeAction" class="com.everyDayUse.action.ConsumeAction" scope="prototype"></bean> 
+	<bean id="consumeTypeAction" class="com.everyDayUse.action.ConsumeTypeAction" scope="prototype" ></bean>
+	<!-- 开启注解功能 -->
+	<context:annotation-config />
+
+	<!-- <context:component-scan base-package="com.everyDayUse"></context:component-scan> -->
+</beans> 

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+	"-//Apache Software Foundation//DTD Struts Configuration 2.3//EN"
+	"http://struts.apache.org/dtds/struts-2.3.dtd">
+
+<struts>
+
+    <!-- 不用重启服务器 -->
+	<constant name="struts.i18n.reload" value="true" />
+	<constant name="struts.configuration.xml.reload" value="true" />
+	<!-- 表单样式 -->
+	<constant name="struts.ui.theme" value="simple" />
+	<!-- 国际化文件 -->
+	<constant name="struts.custom.i18n.resources" value="messages" />
+	<!-- 动态方法调用 -->
+	<!-- <constant name="struts.enable.DynamicMethodInvocation" value="false" /> -->
+	
+		
+    <package name="default" namespace="/" extends="json-default">
+   	<!-- 配置拦截器 -->
+    <!-- <interceptors>
+  		<interceptor name="loginItercepter" class="com.storeManager.filter.LoginItercepter">
+  			<param name="excludeMethods">login</param>
+  		</interceptor>
+  		<interceptor-stack name="myStack">
+  			<interceptor-ref name="loginItercepter"></interceptor-ref>
+  			<interceptor-ref name="defaultStack"></interceptor-ref>
+  		</interceptor-stack>
+  	</interceptors> -->
+  	<!-- 默认使用的栈 -->
+  <!-- 	<default-interceptor-ref name="myStack"></default-interceptor-ref> -->
+   	<action name="user_*" class="userAction" method="{1}">
+   		<result name="welcom" >/consumeManager/welcom.jsp</result>
+   		<result name="loginInput">/login.jsp</result>
+   		<result name="concumePage">/consumeManager/concumeHotel.jsp</result>
+   		<result name="consumeRecord">consumeRecord.jsp</result>
+   	</action>
+   	
+   <action name="consumeType_*" class="consumeTypeAction" method="{1}">
+   	<result name="json" type="json"></result>
+   </action>
+   <action name="consume_*" class="consumeAction" method="{1}">
+   		<result name="findConsumeInfo" type="redirectAction">consume_findConsumeInfo</result>
+   		<result name="consumeRecord">/consumeManager/queryRecord.jsp</result>
+   </action>
+   <action name="consumePlan_*" class="consumePlanAction" method="{1}">
+   	<result name="consume">consumeRecord.jsp</result>
+   	<result name="consumePlanManager">/consumePlanManager.jsp</result>
+   	<result name="input">/consumePlanManager.jsp</result> 
+     </action>
+  	
+    </package>
+
+</struts>
